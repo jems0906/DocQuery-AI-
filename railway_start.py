@@ -4,7 +4,14 @@ Railway-optimized startup script for DocQuery AI
 """
 import os
 import uvicorn
-from simple_api import app
+
+# Try to import the full API, fall back to minimal if needed
+try:
+    from simple_api import app
+    print("🎯 Using full DocQuery AI functionality")
+except ImportError as e:
+    print(f"⚠️ Full API not available ({e}), using minimal API")
+    from minimal_api import app
 
 if __name__ == "__main__":
     # Railway provides PORT environment variable
