@@ -8,7 +8,13 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     software-properties-common \
+    gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for Railway
+ENV PYTHONPATH=/app
+ENV PORT=8000
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -28,21 +34,21 @@ RUN mkdir -p uploads vector_store
 # Expose ports
 EXPOSE 8000 8501
 
-# Create startup script
+# Create startup script for Railway
 RUN echo '#!/bin/bash\n\
-echo "Starting Document Q&A Engine..."\n\
-# Start API server in background\n\
-python run_api.py &\n\
-# Start Streamlit interface\n\
-python run_streamlit.py' > start.sh && chmod +x start.sh
+echo "Starting DocQuery AI..."\n\
+python railway_start.py' > start.sh && chmod +x start.sh
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV STREAMLIT_SERVER_HEADLESS=true
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Expose the port Railway expects
+EXPOSE $PORT
+
+# Simple healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:$PORT/health || exit 1
 
 CMD ["./start.sh"]
